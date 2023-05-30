@@ -1,0 +1,11 @@
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\bin\Debug\login-screen.exe.config
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\bin\Debug\login-screen.exe
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\bin\Debug\login-screen.pdb
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login-screen.csproj.AssemblyReference.cache
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login-screen.csproj.SuggestedBindingRedirects.cache
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login_screen.login.resources
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login_screen.Properties.Resources.resources
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login-screen.csproj.GenerateResource.cache
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login-screen.csproj.CoreCompileInputs.cache
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login-screen.exe
+D:\STUDY\CSC15002-BMCSDL\lab\lab-03\login-screen\login-screen\obj\Debug\login-screen.pdb
