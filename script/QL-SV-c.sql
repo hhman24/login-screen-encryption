@@ -1,0 +1,136 @@
+﻿/*----------------------------------------------------------
+MASV: 20127102
+HO TEN: HOÀNG HỮU MINH AN
+LAB: 03
+NGAY: 05/04/2023
+----------------------------------------------------------*/
+
+USE QLSinhVien
+GO
+
+-- Tạo Stored dùng để thêm mới dữ liệu (Insert) vào table SINHVIEN, trong đó thuộc tính
+-- MATKHAU được mã hóa (HASH) sử dụng MD5
+
+IF OBJECT_ID('SP_INS_SINHVIEN') IS NOT NULL
+	DROP PROCEDURE SP_INS_SINHVIEN
+GO
+
+CREATE PROCEDURE SP_INS_SINHVIEN @MASV nvarchar(20),
+								 @HOTEN nvarchar(100),
+								 @NGAYSINH DATETIME,
+								 @DIACHI nvarchar(200),
+								 @MALOP varchar(200),
+								 @TENDN nvarchar(100),
+								 @MATKHAU nvarchar(4000)
+AS
+BEGIN
+	IF(@MASV IS NULL OR @HOTEN IS NULL 
+	   OR @TENDN IS NULL OR @MATKHAU IS NULL)
+	BEGIN 
+		RAISERROR('MASV OR HOTEN OR TENDN OR MATKHAU IS NULL', 16, 1)
+		RETURN
+	END
+	-- CHECK XEM THỬ MASV ĐÃ TỒN TẠI CHƯA ??
+
+	-- CHECK TABLE IS EXISTS
+	DECLARE @HASH_MK VARBINARY(MAX)
+	SET @HASH_MK = HASHBYTES('MD5', @MATKHAU) -- output: stand 16bytes -  max: 8000bytes
+	INSERT INTO SINHVIEN
+	VALUES(@MASV, @HOTEN, @NGAYSINH, @DIACHI, @MALOP, @TENDN, @HASH_MK)
+END
+GO
+
+DELETE FROM SINHVIEN WHERE MASV LIKE 'SV01'
+GO
+
+EXEC SP_INS_SINHVIEN 'SV01', 'NGUYEN VAN A', '1/1/1990', '280 AN DUONG VUONG', 'CNTT-K35', 'NVA', '123456'
+GO
+
+-- Stored dùng để thêm mới dữ liệu (Insert) vào table NHANVIEN, trong đó thuộc tính
+-- MATKHAU được mã hóa (HASH) sử dụng SHA1 và thuộc tính LUONG sẽ được mã
+-- hóa sử dụng thuật toán AES 256, với khóa mã hóa là mã số của sinh viên thực hiện bài
+-- Lab này.
+
+IF OBJECT_ID('SP_INS_NHANVIEN') IS NOT NULL
+	DROP PROCEDURE SP_INS_NHANVIEN
+GO
+
+CREATE PROCEDURE SP_INS_NHANVIEN @MANV varchar(20),
+								 @HOTEN nvarchar(100),
+								 @EMAIL varchar(20),
+								 @LUONG decimal(10,0),
+								 @TENDN nvarchar(100),
+								 @MATKHAU nvarchar(4000)
+AS
+BEGIN
+	-- HASH MK
+	DECLARE @HASH_MK VARBINARY(MAX)
+	SET @HASH_MK = HASHBYTES('SHA1', @MATKHAU) -- output: stand 16bytes -  max: 8000bytes
+
+	-- ENCRYPT LUONG
+	-- B1: TẠO MASTERKEY - mã hóa dựa trên định danh
+	IF NOT EXISTS
+	(
+		SELECT *
+		FROM sys.symmetric_keys
+		WHERE symmetric_key_id = 101
+	)
+	CREATE MASTER KEY ENCRYPTION BY
+		PASSWORD = '20127102'
+		
+	-- B2. TẠO CERTIFICATE
+	IF NOT EXISTS
+	(
+		SELECT *
+		FROM sys.certificates
+		WHERE name = 'hhman'
+	)
+	CREATE CERTIFICATE hhman
+		WITH SUBJECT = 'hhman'
+
+	-- B3. TẠO SYMETRIC KEY
+	IF NOT EXISTS
+	(
+		SELECT *
+		FROM sys.symmetric_keys
+		WHERE name = 'PriKey'
+	)
+	CREATE SYMMETRIC KEY PriKey
+		WITH ALGORITHM = AES_256
+		ENCRYPTION BY CERTIFICATE hhman
+		
+	-- B4. 
+	OPEN SYMMETRIC KEY PriKey
+	DECRYPTION BY CERTIFICATE hhman
+
+	DECLARE @EN_LUONG VARBINARY(MAX)
+	SET @EN_LUONG = ENCRYPTBYKEY(KEY_GUID('PriKey'), CONVERT(varbinary(MAX),@LUONG))
+
+	-- INSERT
+	INSERT INTO NHANVIEN
+	VALUES(@MANV, @HOTEN, @EMAIL, @EN_LUONG, @TENDN, @HASH_MK)
+END
+GO
+
+DELETE FROM NHANVIEN WHERE MANV LIKE 'NV01'
+GO
+
+EXEC SP_INS_NHANVIEN 'NV01', 'NGUYEN VAN A', 'NVA@', 3000000, 'NVA', 'abcd12'
+GO
+
+IF OBJECT_ID('SP_SEL_NHANVIEN') IS NOT NULL
+	DROP PROCEDURE SP_SEL_NHANVIEN
+GO
+
+CREATE PROCEDURE SP_SEL_NHANVIEN
+AS
+BEGIN
+	OPEN SYMMETRIC KEY PriKey
+	DECRYPTION BY CERTIFICATE hhman
+
+	SELECT MANV, HOTEN, EMAIL, CONVERT(decimal(10,0), DECRYPTBYKEY(LUONG)) LUONGCB
+	FROM NHANVIEN
+END
+GO
+
+EXEC SP_SEL_NHANVIEN
